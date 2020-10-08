@@ -1,0 +1,37 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+test <- read_excel("test.xlsx",col_types = c("text",
+    "date","numeric","numeric"))
+test$Year<-year(test$date)
+```
+
+```{r pressure, echo=FALSE}
+test1<-test%>%
+  group_by(group,Year)%>%
+  roll_lm(R,M,2)
+```
+
+```{r}
+slope <- . %>% { cov(.[, 3], .[, 2]) / var(.[, 3])}
+test1<-test %>%
+       group_by(group,Year) %>%
+       mutate(slope = rollapplyr(cbind(R, M), 2, slope, by.column = FALSE, fill = NA)) %>%ungroup()
+```
+
+```{r}
+
+df1<-df %>% 
+  group_by(group,Year) %>% 
+  do(data.frame(., rolling_coef = c(NA, rollapply(data = ., width = 2, FUN = function(df_) {
+    d = data.frame(df_)
+    d[, c(3,4)] <- apply(d[,c(3,4)], MARGIN = 2, FUN = as.numeric)
+    mod = lm(R ~ M, data = d)
+    return(coef(mod)[2])
+  }, by.column = FALSE, align = "right"))))
+```
+
